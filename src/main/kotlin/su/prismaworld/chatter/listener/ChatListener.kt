@@ -25,7 +25,7 @@ import su.prismaworld.chatter.preference.PreferenceManager
  * - Сообщение с префиксом [ChatSettings.globalPrefix] уходит в противоположный канал, префикс при этом вырезается.
  * - Локальное сообщение видят только игроки в том же мире в пределах [ChatSettings.localRadius] блоков,
  *   глобальное - все, у кого глобальный чат не отключён в настройках.
- * - Модули (`:loc:`) заменяются интерактивными компонентами, см. [ChatModules].
+ * - Модули (`:loc:`, `:item:`) заменяются интерактивными компонентами, см. [ChatModules].
  * - Игроки с включённым звуком упоминания слышат звук, когда их ник есть в сообщении.
  */
 class ChatListener(
@@ -56,7 +56,7 @@ class ChatListener(
         }
 
         event.message(modules.apply(event.player, event.message(), settings.modules))
-        // Сообщение могло опустеть после замены модулей.
+        // Сообщение могло опустеть, например если в нём был только :item: при пустой руке.
         if (plainText.serialize(event.message()).isBlank()) {
             reject(event, settings.emptyMessage, settings)
             return

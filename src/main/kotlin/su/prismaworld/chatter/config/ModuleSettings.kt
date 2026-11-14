@@ -6,13 +6,15 @@ import org.bukkit.World
 import org.bukkit.configuration.ConfigurationSection
 import java.util.logging.Logger
 
-/** Настройки модулей сообщений (`:loc:`). */
+/** Настройки модулей сообщений (`:loc:`, `:item:`). */
 data class ModuleSettings(
     val locationEnabled: Boolean,
     val locationFormat: String,
     val locationClipboard: String,
     val locationHover: String,
     val dimensionColors: Map<World.Environment, TextColor>,
+    val itemEnabled: Boolean,
+    val itemFormat: String,
 ) {
     companion object {
         private val DEFAULT_DIMENSION_COLORS = mapOf(
@@ -38,6 +40,8 @@ data class ModuleSettings(
                 val default = DEFAULT_DIMENSION_COLORS[environment] ?: NamedTextColor.WHITE
                 loadColor(config, "modules.loc.colors.${DIMENSION_IDS[environment]}", default, logger)
             },
+            itemEnabled = config.getBoolean("modules.item.enabled", true),
+            itemFormat = config.getString("modules.item.format", "[<item>]").orEmpty(),
         )
 
         /** Принимает название цвета (`green`) или HEX (`#55FF55`). */

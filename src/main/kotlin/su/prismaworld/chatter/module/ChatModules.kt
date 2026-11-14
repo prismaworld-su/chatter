@@ -7,7 +7,7 @@ import org.bukkit.entity.Player
 import su.prismaworld.chatter.config.ModuleSettings
 
 /** Применяет к сообщению все включённые модули. */
-class ChatModules(private val modules: List<ChatModule> = listOf(LocationModule())) {
+class ChatModules(private val modules: List<ChatModule> = listOf(LocationModule(), ItemModule())) {
 
     fun apply(player: Player, message: Component, settings: ModuleSettings): Component =
         modules.filter { it.isEnabled(settings) }.fold(message) { result, module ->
