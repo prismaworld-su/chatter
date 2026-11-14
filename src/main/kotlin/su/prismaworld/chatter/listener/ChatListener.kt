@@ -10,16 +10,23 @@ import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
+import su.prismaworld.chatter.channel.ChannelStorage
+import su.prismaworld.chatter.channel.ChatChannel
 import su.prismaworld.chatter.config.ChatSettings
 
 /**
  * Разделяет чат на локальный и глобальный.
  *
- * - Сообщение без префикса уходит в локальный чат: его видят только игроки
- *   в том же мире в пределах [ChatSettings.localRadius] блоков.
- * - Сообщение с префиксом [ChatSettings.globalPrefix] уходит всем, префикс при этом вырезается.
+ * - Сообщение без префикса уходит в канал, выбранный игроком через `/chat`
+ *   (по умолчанию [ChatSettings.defaultChannel]).
+ * - Сообщение с префиксом [ChatSettings.globalPrefix] уходит в противоположный канал, префикс при этом вырезается.
+ * - Локальное сообщение видят только игроки в том же мире в пределах [ChatSettings.localRadius] блоков,
+ *   глобальное - все.
  */
-class ChatListener(private val settings: () -> ChatSettings) : Listener {
+class ChatListener(
+    private val settings: () -> ChatSettings,
+    private val storage: ChannelStorage,
+) : Listener {
 
     private val miniMessage = MiniMessage.miniMessage()
     private val plainText = PlainTextComponentSerializer.plainText()
@@ -34,9 +41,17 @@ class ChatListener(private val settings: () -> ChatSettings) : Listener {
         val text = plainText.serialize(event.message())
 
         if (text.startsWith(settings.globalPrefix)) {
-            routeGlobal(event, settings, text.removePrefix(settings.globalPrefix).trim())
-        } else {
-            routeLocal(event, settings)
+            val content = text.removePrefix(settings.globalPrefix).trim()
+            if (content.isEmpty()) {
+                rejectEmpty(event, settings)
+                return
+            }
+            event.message(Component.text(content))
+        }
+
+        when (resolveChannel(event.player, text, settings)) {
+            ChatChannel.LOCAL -> routeLocal(event, settings)
+            ChatChannel.GLOBAL -> routeGlobal(event, settings)
         }
     }
 
@@ -47,9 +62,13 @@ class ChatListener(private val settings: () -> ChatSettings) : Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     fun onChatMonitor(event: AsyncChatEvent) {
         val settings = settings()
-        if (settings.nobodyHeardMessage.isEmpty() || isGlobal(event, settings)) return
+        if (settings.nobodyHeardMessage.isEmpty()) return
 
+        // Канал определяется по исходному сообщению, т.к. из текущего префикс уже вырезан.
         val sender = event.player
+        val channel = resolveChannel(sender, plainText.serialize(event.originalMessage()), settings)
+        if (channel != ChatChannel.LOCAL) return
+
         val heardBySomeone = event.viewers().any { it is Player && it != sender }
         if (!heardBySomeone) {
             sender.sendMessage(
@@ -61,21 +80,25 @@ class ChatListener(private val settings: () -> ChatSettings) : Listener {
         }
     }
 
-    private fun routeGlobal(event: AsyncChatEvent, settings: ChatSettings, content: String) {
-        if (content.isEmpty()) {
-            event.isCancelled = true
-            if (settings.emptyGlobalMessage.isNotEmpty()) {
-                event.player.sendMessage(
-                    miniMessage.deserialize(
-                        settings.emptyGlobalMessage,
-                        Placeholder.unparsed("prefix", settings.globalPrefix),
-                    )
-                )
-            }
-            return
-        }
+    /** Префикс отправляет сообщение в канал, противоположный выбранному игроком. */
+    private fun resolveChannel(player: Player, text: String, settings: ChatSettings): ChatChannel {
+        val selected = storage.get(player)
+        return if (text.startsWith(settings.globalPrefix)) selected.opposite else selected
+    }
 
-        event.message(Component.text(content))
+    private fun rejectEmpty(event: AsyncChatEvent, settings: ChatSettings) {
+        event.isCancelled = true
+        if (settings.emptyGlobalMessage.isNotEmpty()) {
+            event.player.sendMessage(
+                miniMessage.deserialize(
+                    settings.emptyGlobalMessage,
+                    Placeholder.unparsed("prefix", settings.globalPrefix),
+                )
+            )
+        }
+    }
+
+    private fun routeGlobal(event: AsyncChatEvent, settings: ChatSettings) {
         event.renderer(ChatRenderer.viewerUnaware(FormatRenderer(settings.globalFormat)))
     }
 
@@ -91,10 +114,6 @@ class ChatListener(private val settings: () -> ChatSettings) : Listener {
         }
         event.renderer(ChatRenderer.viewerUnaware(FormatRenderer(settings.localFormat)))
     }
-
-    /** Глобальность определяется по исходному сообщению, т.к. из текущего префикс уже вырезан. */
-    private fun isGlobal(event: AsyncChatEvent, settings: ChatSettings): Boolean =
-        plainText.serialize(event.originalMessage()).startsWith(settings.globalPrefix)
 
     private inner class FormatRenderer(private val format: String) : ChatRenderer.ViewerUnaware {
         override fun render(source: Player, sourceDisplayName: Component, message: Component): Component =
