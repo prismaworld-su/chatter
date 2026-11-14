@@ -6,3 +6,8 @@ api-version: '26.3'
 load: POSTWORLD
 
 authors: [ loseex ]
+
+permissions:
+  chatter.reload:
+    description: Позволяет перезагружать конфигурацию плагина командой /chatter reload
+    default: op
