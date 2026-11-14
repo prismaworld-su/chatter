@@ -24,6 +24,7 @@ data class ChatSettings(
     val mentionSound: Sound,
     val nobodyHeardMessage: String,
     val emptyGlobalMessage: String,
+    val emptyMessage: String,
     val globalDisabledMessage: String,
     val reloadedMessage: String,
     val usageMessage: String,
@@ -32,6 +33,7 @@ data class ChatSettings(
     val playerOnlyMessage: String,
     val channelNames: Map<ChatChannel, String>,
     val menu: MenuSettings,
+    val modules: ModuleSettings,
 ) {
     /** Квадрат радиуса, чтобы сравнивать расстояния без извлечения корня. */
     val localRadiusSquared: Double = localRadius * localRadius
@@ -70,6 +72,7 @@ data class ChatSettings(
                 mentionSound = loadMentionSound(config, logger),
                 nobodyHeardMessage = config.getString("messages.nobody-heard").orEmpty(),
                 emptyGlobalMessage = config.getString("messages.empty-global").orEmpty(),
+                emptyMessage = config.getString("messages.empty-message").orEmpty(),
                 globalDisabledMessage = config.getString("messages.global-disabled").orEmpty(),
                 reloadedMessage = config.getString("messages.reloaded").orEmpty(),
                 usageMessage = config.getString("messages.usage").orEmpty(),
@@ -80,6 +83,7 @@ data class ChatSettings(
                     config.getString("messages.channel-names.${channel.id}") ?: channel.id
                 },
                 menu = MenuSettings.load(config),
+                modules = ModuleSettings.load(config, logger),
             )
         }
 

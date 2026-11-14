@@ -13,6 +13,7 @@ import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import su.prismaworld.chatter.channel.ChatChannel
 import su.prismaworld.chatter.config.ChatSettings
+import su.prismaworld.chatter.module.ChatModules
 import su.prismaworld.chatter.preference.ChatToggle
 import su.prismaworld.chatter.preference.PreferenceManager
 
@@ -24,11 +25,13 @@ import su.prismaworld.chatter.preference.PreferenceManager
  * - Сообщение с префиксом [ChatSettings.globalPrefix] уходит в противоположный канал, префикс при этом вырезается.
  * - Локальное сообщение видят только игроки в том же мире в пределах [ChatSettings.localRadius] блоков,
  *   глобальное - все, у кого глобальный чат не отключён в настройках.
+ * - Модули (`:loc:`, `:item:`) заменяются интерактивными компонентами, см. [ChatModules].
  * - Игроки с включённым звуком упоминания слышат звук, когда их ник есть в сообщении.
  */
 class ChatListener(
     private val settings: () -> ChatSettings,
     private val preferences: PreferenceManager,
+    private val modules: ChatModules,
 ) : Listener {
 
     private val miniMessage = MiniMessage.miniMessage()
@@ -50,6 +53,13 @@ class ChatListener(
                 return
             }
             event.message(Component.text(content))
+        }
+
+        event.message(modules.apply(event.player, event.message(), settings.modules))
+        // Сообщение могло опустеть, например если в нём был только :item: при пустой руке.
+        if (plainText.serialize(event.message()).isBlank()) {
+            reject(event, settings.emptyMessage, settings)
+            return
         }
 
         when (resolveChannel(event.player, text, settings)) {
