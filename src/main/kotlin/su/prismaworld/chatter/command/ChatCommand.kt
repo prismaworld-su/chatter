@@ -5,17 +5,19 @@ import io.papermc.paper.command.brigadier.CommandSourceStack
 import net.kyori.adventure.text.minimessage.MiniMessage
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder
 import org.bukkit.entity.Player
-import su.prismaworld.chatter.channel.ChannelStorage
 import su.prismaworld.chatter.channel.ChatChannel
 import su.prismaworld.chatter.config.ChatSettings
+import su.prismaworld.chatter.menu.ChatMenu
+import su.prismaworld.chatter.preference.PreferenceManager
 
 /**
- * Команда `/chat [local|global]` - выбор канала для сообщений без префикса.
- * Без аргументов показывает текущий канал.
+ * Команда `/chat [local|global]`.
+ *
+ * Без аргументов открывает меню настроек чата, с аргументом выбирает канал для сообщений без префикса.
  */
 class ChatCommand(
     private val settings: () -> ChatSettings,
-    private val storage: ChannelStorage,
+    private val preferences: PreferenceManager,
 ) : BasicCommand {
 
     private val miniMessage = MiniMessage.miniMessage()
@@ -30,7 +32,7 @@ class ChatCommand(
         }
 
         if (args.isEmpty()) {
-            sender.sendMessage(render(settings.channelCurrentMessage, settings, storage.get(sender)))
+            ChatMenu(sender, preferences, this.settings).open()
             return
         }
 
@@ -40,8 +42,11 @@ class ChatCommand(
             return
         }
 
-        storage.set(sender, channel)
-        sender.sendMessage(render(settings.channelSwitchedMessage, settings, channel))
+        if (preferences.selectChannel(sender, channel)) {
+            sender.sendMessage(render(settings.channelSwitchedMessage, settings, channel))
+        } else {
+            sender.sendMessage(render(settings.globalDisabledMessage, settings, channel))
+        }
     }
 
     override fun suggest(source: CommandSourceStack, args: Array<String>): Collection<String> {

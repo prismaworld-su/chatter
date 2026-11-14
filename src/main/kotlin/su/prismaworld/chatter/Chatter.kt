@@ -1,11 +1,14 @@
 package su.prismaworld.chatter
 
 import org.bukkit.plugin.java.JavaPlugin
-import su.prismaworld.chatter.channel.ChannelStorage
 import su.prismaworld.chatter.command.ChatCommand
 import su.prismaworld.chatter.command.ChatterCommand
 import su.prismaworld.chatter.config.ChatSettings
 import su.prismaworld.chatter.listener.ChatListener
+import su.prismaworld.chatter.listener.ServerMessageListener
+import su.prismaworld.chatter.menu.ChatMenu
+import su.prismaworld.chatter.menu.ChatMenuListener
+import su.prismaworld.chatter.preference.PreferenceManager
 
 class Chatter : JavaPlugin() {
 
@@ -30,13 +33,22 @@ class Chatter : JavaPlugin() {
 
         loadSettings()
 
-        val channelStorage = ChannelStorage(this) { settings.defaultChannel }
+        val preferences = PreferenceManager(this) { settings }
         // Игроки, уже находящиеся на сервере (например, после перезагрузки плагина), не вызовут PlayerJoinEvent.
-        server.onlinePlayers.forEach(channelStorage::load)
+        server.onlinePlayers.forEach(preferences::load)
 
-        server.pluginManager.registerEvents(channelStorage, this)
-        server.pluginManager.registerEvents(ChatListener({ settings }, channelStorage), this)
-        registerCommand("chat", "Выбор канала для сообщений без префикса", ChatCommand({ settings }, channelStorage))
+        server.pluginManager.registerEvents(preferences, this)
+        server.pluginManager.registerEvents(ChatListener({ settings }, preferences), this)
+        server.pluginManager.registerEvents(ServerMessageListener(server, preferences), this)
+        server.pluginManager.registerEvents(ChatMenuListener(), this)
+        registerCommand("chat", "Настройки чата", ChatCommand({ settings }, preferences))
         registerCommand("chatter", "Управление плагином Chatter", ChatterCommand(this))
+    }
+
+    override fun onDisable() {
+        // После отключения плагина клики по меню никто не обработает, поэтому открытые меню закрываются.
+        server.onlinePlayers
+            .filter { it.openInventory.topInventory.getHolder(false) is ChatMenu }
+            .forEach { it.closeInventory() }
     }
 }
