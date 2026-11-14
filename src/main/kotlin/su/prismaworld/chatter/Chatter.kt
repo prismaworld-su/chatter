@@ -1,6 +1,7 @@
 package su.prismaworld.chatter
 
 import org.bukkit.plugin.java.JavaPlugin
+import su.prismaworld.chatter.channel.ChannelStorage
 import su.prismaworld.chatter.command.ChatterCommand
 import su.prismaworld.chatter.config.ChatSettings
 import su.prismaworld.chatter.listener.ChatListener
@@ -28,7 +29,12 @@ class Chatter : JavaPlugin() {
 
         loadSettings()
 
-        server.pluginManager.registerEvents(ChatListener { settings }, this)
+        val channelStorage = ChannelStorage(this) { settings.defaultChannel }
+        // Игроки, уже находящиеся на сервере (например, после перезагрузки плагина), не вызовут PlayerJoinEvent.
+        server.onlinePlayers.forEach(channelStorage::load)
+
+        server.pluginManager.registerEvents(channelStorage, this)
+        server.pluginManager.registerEvents(ChatListener({ settings }, channelStorage), this)
         registerCommand("chatter", "Управление плагином Chatter", ChatterCommand(this))
     }
 }
