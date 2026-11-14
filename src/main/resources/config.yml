@@ -1,0 +1,23 @@
+# Все форматы и сообщения используют MiniMessage: https://docs.papermc.io/adventure/minimessage/format/
+# Плейсхолдеры в форматах чата:
+#   <player>  - отображаемое имя отправителя
+#   <message> - текст сообщения
+
+local:
+  # Радиус слышимости локального чата в блоках (только в пределах одного мира).
+  radius: 128
+  format: "<gray>[L]</gray> <white><player></white><dark_gray>:</dark_gray> <message>"
+
+global:
+  # Префикс, с которого должно начинаться сообщение, чтобы оно ушло в глобальный чат.
+  prefix: "!"
+  format: "<gold>[G]</gold> <white><player></white><dark_gray>:</dark_gray> <message>"
+
+messages:
+  # Отправляется игроку, если его локальное сообщение никто не услышал. Пустая строка отключает уведомление.
+  # Доступен плейсхолдер <prefix> - префикс глобального чата.
+  nobody-heard: "<gray><italic>Вас никто не услышал. Чтобы написать в глобальный чат, начните сообщение с <prefix></italic></gray>"
+  # Отправляется, если после префикса глобального чата нет текста.
+  empty-global: "<red>Введите текст сообщения после <prefix></red>"
+  reloaded: "<green>Конфигурация Chatter перезагружена.</green>"
+  usage: "<red>Использование: /chatter reload</red>"
