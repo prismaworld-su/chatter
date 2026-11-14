@@ -2,6 +2,7 @@ package su.prismaworld.chatter
 
 import org.bukkit.plugin.java.JavaPlugin
 import su.prismaworld.chatter.config.ChatSettings
+import su.prismaworld.chatter.listener.ChatListener
 
 class Chatter : JavaPlugin() {
 
@@ -25,5 +26,7 @@ class Chatter : JavaPlugin() {
         instance = this
 
         loadSettings()
+
+        server.pluginManager.registerEvents(ChatListener { settings }, this)
     }
 }
