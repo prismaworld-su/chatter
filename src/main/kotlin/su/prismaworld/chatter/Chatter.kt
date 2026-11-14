@@ -8,6 +8,7 @@ import su.prismaworld.chatter.listener.ChatListener
 import su.prismaworld.chatter.listener.ServerMessageListener
 import su.prismaworld.chatter.menu.ChatMenu
 import su.prismaworld.chatter.menu.ChatMenuListener
+import su.prismaworld.chatter.module.ChatModules
 import su.prismaworld.chatter.preference.PreferenceManager
 
 class Chatter : JavaPlugin() {
@@ -38,7 +39,7 @@ class Chatter : JavaPlugin() {
         server.onlinePlayers.forEach(preferences::load)
 
         server.pluginManager.registerEvents(preferences, this)
-        server.pluginManager.registerEvents(ChatListener({ settings }, preferences), this)
+        server.pluginManager.registerEvents(ChatListener({ settings }, preferences, ChatModules()), this)
         server.pluginManager.registerEvents(ServerMessageListener(server, preferences), this)
         server.pluginManager.registerEvents(ChatMenuListener(), this)
         registerCommand("chat", "Настройки чата", ChatCommand({ settings }, preferences))
