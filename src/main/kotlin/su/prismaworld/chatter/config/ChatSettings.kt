@@ -20,6 +20,11 @@ data class ChatSettings(
     val emptyGlobalMessage: String,
     val reloadedMessage: String,
     val usageMessage: String,
+    val channelCurrentMessage: String,
+    val channelSwitchedMessage: String,
+    val channelUsageMessage: String,
+    val playerOnlyMessage: String,
+    val channelNames: Map<ChatChannel, String>,
 ) {
     /** Квадрат радиуса, чтобы сравнивать расстояния без извлечения корня. */
     val localRadiusSquared: Double = localRadius * localRadius
@@ -57,6 +62,13 @@ data class ChatSettings(
                 emptyGlobalMessage = config.getString("messages.empty-global").orEmpty(),
                 reloadedMessage = config.getString("messages.reloaded").orEmpty(),
                 usageMessage = config.getString("messages.usage").orEmpty(),
+                channelCurrentMessage = config.getString("messages.channel-current").orEmpty(),
+                channelSwitchedMessage = config.getString("messages.channel-switched").orEmpty(),
+                channelUsageMessage = config.getString("messages.channel-usage").orEmpty(),
+                playerOnlyMessage = config.getString("messages.player-only").orEmpty(),
+                channelNames = ChatChannel.entries.associateWith { channel ->
+                    config.getString("messages.channel-names.${channel.id}") ?: channel.id
+                },
             )
         }
     }

@@ -27,3 +27,11 @@ messages:
   reloaded: "<green>Конфигурация Chatter перезагружена.</green>"
   usage: "<red>Использование: /chatter reload</red>"
 
+  # Сообщения команды /chat. Плейсхолдеры: <channel> - название канала, <prefix> - префикс смены канала.
+  channel-current: "<gray>Сообщения без префикса уходят в <white><channel></white> чат. Сменить: /chat local или /chat global</gray>"
+  channel-switched: "<green>Сообщения без префикса теперь уходят в <white><channel></white> чат. Префикс <white><prefix></white> отправит сообщение в другой канал.</green>"
+  channel-usage: "<red>Использование: /chat local или /chat global</red>"
+  player-only: "<red>Эта команда доступна только игрокам.</red>"
+  channel-names:
+    local: "локальный"
+    global: "глобальный"

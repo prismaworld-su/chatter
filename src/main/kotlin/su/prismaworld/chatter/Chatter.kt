@@ -2,6 +2,7 @@ package su.prismaworld.chatter
 
 import org.bukkit.plugin.java.JavaPlugin
 import su.prismaworld.chatter.channel.ChannelStorage
+import su.prismaworld.chatter.command.ChatCommand
 import su.prismaworld.chatter.command.ChatterCommand
 import su.prismaworld.chatter.config.ChatSettings
 import su.prismaworld.chatter.listener.ChatListener
@@ -35,6 +36,7 @@ class Chatter : JavaPlugin() {
 
         server.pluginManager.registerEvents(channelStorage, this)
         server.pluginManager.registerEvents(ChatListener({ settings }, channelStorage), this)
+        registerCommand("chat", "Выбор канала для сообщений без префикса", ChatCommand({ settings }, channelStorage))
         registerCommand("chatter", "Управление плагином Chatter", ChatterCommand(this))
     }
 }
