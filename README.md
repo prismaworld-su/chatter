@@ -37,6 +37,41 @@ Modules turn text in a message into interactive elements. They work in chat, pri
 - `:loc:` shows your coordinates, colored by dimension. Click them to copy.
 - `:item:` shows the item in your main hand, colored by rarity. Hover over it to see its tooltip. With an empty hand the module is removed from the message.
 
+### PlaceholderAPI
+
+[PlaceholderAPI](https://modrinth.com/plugin/placeholderapi) is optional. When it is installed, Chatter works with it both ways.
+
+**Placeholders in formats.** Placeholders of other plugins, such as `%luckperms_prefix%` from LuckPerms, work in the chat, roleplay and private message formats in `config.yml`:
+
+```yaml
+local:
+  format: "<gray>[L]</gray> %luckperms_prefix%<white><player></white><dark_gray>:</dark_gray> <message>"
+```
+
+- A `%placeholder%` takes the value of the message author and is put into the format before MiniMessage parses it, so placeholders also work inside tag arguments, for example in `<hover>` and `<click>`.
+- In private message formats `%placeholder%` is the sender's value. `<recipient_papi:placeholder>` gives the recipient's value, for example `<recipient_papi:luckperms_prefix>`.
+- A value may contain MiniMessage tags and legacy colors: `&c`, `§c`, `&#RRGGBB`. Colors from `&` and `§` codes end with the value, so they do not spill over the rest of the format.
+- An unknown placeholder is left as is.
+- Placeholders in the text players write are not processed, so players cannot read other placeholders through chat.
+- Chat messages are formatted off the main thread, as Paper does for all chat, so placeholders in chat formats are requested from that thread.
+
+**Chatter placeholders.** Other plugins, such as scoreboards or TAB, can show a player's chat settings:
+
+| Placeholder | Value |
+| --- | --- |
+| `%chatter_channel%` | The channel for messages without a prefix: `local` or `global` |
+| `%chatter_channel_name%` | The name of that channel from `messages.channel-names` |
+| `%chatter_global_chat%` | Whether global chat is on |
+| `%chatter_join_quit%` | Whether join and quit messages are on |
+| `%chatter_death_messages%` | Whether death messages are on |
+| `%chatter_advancements%` | Whether advancement messages are on |
+| `%chatter_mention_sound%` | Whether the mention sound is on |
+| `%chatter_private_messages%` | Whether private messages are on |
+| `%chatter_private_message_sound%` | Whether the private message sound is on |
+| `%chatter_socialspy%` | Whether the player sees other players' private messages: `/socialspy` is on and the player has `chatter.spy` |
+
+On/off values are shown as set in the PlaceholderAPI config (`boolean.true` and `boolean.false`, `yes` and `no` by default). For an offline player the value is empty.
+
 ### Personal settings
 
 `/chat` opens a menu where each player sets:
@@ -96,7 +131,7 @@ Only `/chatter reload` can be run from the console; the other commands are for p
 ## Installation
 
 1. Make sure the server runs Paper 26.3 on Java 26.
-2. Put `chatter-<version>-all.jar` into the `plugins` folder.
+2. Put `chatter-<version>-all.jar` into the `plugins` folder. Optionally, install [PlaceholderAPI](https://modrinth.com/plugin/placeholderapi) and the expansions you need, for example `/papi ecloud download LuckPerms`.
 3. Start the server. Edit `plugins/chatter/config.yml` if needed and run `/chatter reload`.
 
 ## Building
@@ -105,6 +140,8 @@ Only `/chatter reload` can be run from the console; the other commands are for p
 
 The plugin jar is written to `build/libs/chatter-<version>-all.jar`. Use the `-all` jar: it bundles the Kotlin runtime the plugin needs.
 
+`./gradlew build` also runs the tests.
+
 `./gradlew runServer` starts a local Paper 26.3 test server with the plugin installed.
 
-Every push and pull request to `stable` is built on GitHub Actions, and the jar is attached to the run as the `chatter` artifact for 14 days.
+Every push and pull request to `stable` is built and tested on GitHub Actions, and the jar is attached to the run as the `chatter` artifact for 14 days.
