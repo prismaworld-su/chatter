@@ -16,4 +16,10 @@ enum class ChatToggle(val id: String) {
 
     /** Звук при упоминании ника игрока в чате. */
     MENTION_SOUND("mention-sound"),
+
+    /** Получение и отправка личных сообщений. */
+    PRIVATE_MESSAGES("private-messages"),
+
+    /** Звук при получении личного сообщения. */
+    PRIVATE_MESSAGE_SOUND("private-message-sound"),
 }

@@ -16,12 +16,15 @@ import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerQuitEvent
 import su.prismaworld.chatter.config.ChatSettings
 import su.prismaworld.chatter.module.ChatModules
+import su.prismaworld.chatter.preference.ChatToggle
+import su.prismaworld.chatter.preference.PreferenceManager
 import java.util.UUID
 
 /**
  * Личные сообщения между игроками в сети.
  *
  * - Игроки, скрытые от отправителя (например, в ванише), считаются не в сети.
+ * - Отправить или получить сообщение можно, только если личные сообщения включены в настройках `/chat`.
  * - В сообщениях работают модули (`:loc:`, `:item:`), см. [ChatModules].
  * - Для `/r` запоминается последний собеседник каждого игрока: им становятся и получатель, и отправитель.
  *   Собеседник игрока забывается при его выходе с сервера.
@@ -31,6 +34,7 @@ import java.util.UUID
 class PrivateMessenger(
     private val server: Server,
     private val settings: () -> ChatSettings,
+    private val preferences: PreferenceManager,
     private val modules: ChatModules,
 ) : Listener {
 
@@ -44,6 +48,7 @@ class PrivateMessenger(
     /** Отправляет сообщение игроку с ником [recipientName] (без учёта регистра). */
     fun send(sender: Player, recipientName: String, text: String) {
         val settings = settings()
+        if (!canSend(sender, settings)) return
 
         val recipient = findVisible(sender, server.getPlayerExact(recipientName))
         if (recipient == null) {
@@ -56,6 +61,7 @@ class PrivateMessenger(
     /** Отправляет сообщение последнему собеседнику игрока. */
     fun reply(sender: Player, text: String) {
         val settings = settings()
+        if (!canSend(sender, settings)) return
 
         val interlocutor = interlocutors[sender.uniqueId]
         if (interlocutor == null) {
@@ -83,6 +89,12 @@ class PrivateMessenger(
         interlocutors.remove(event.player.uniqueId)
     }
 
+    private fun canSend(sender: Player, settings: ChatSettings): Boolean {
+        if (preferences.isEnabled(sender, ChatToggle.PRIVATE_MESSAGES)) return true
+        sendMessage(sender, settings.privateMessages.disabledMessage)
+        return false
+    }
+
     private fun findVisible(sender: Player, player: Player?): Player? = player?.takeIf { sender.canSee(it) }
 
     private fun deliver(sender: Player, recipient: Player, text: String, settings: ChatSettings) {
@@ -90,6 +102,10 @@ class PrivateMessenger(
 
         if (recipient == sender) {
             sendMessage(sender, pm.selfMessage)
+            return
+        }
+        if (!preferences.isEnabled(recipient, ChatToggle.PRIVATE_MESSAGES)) {
+            sendMessage(sender, pm.recipientDisabledMessage, recipient.name)
             return
         }
 
@@ -105,7 +121,9 @@ class PrivateMessenger(
         // Каждый участник может нажать на ник собеседника, чтобы написать ему.
         sendFormatted(sender, pm.formatSent, senderName, clickableName(recipient, pm.replyHover), message)
         sendFormatted(recipient, pm.formatReceived, clickableName(sender, pm.replyHover), recipientName, message)
-        recipient.playSound(pm.sound, Sound.Emitter.self())
+        if (preferences.isEnabled(recipient, ChatToggle.PRIVATE_MESSAGE_SOUND)) {
+            recipient.playSound(pm.sound, Sound.Emitter.self())
+        }
 
         interlocutors[sender.uniqueId] = Interlocutor(recipient.uniqueId, recipient.name)
         interlocutors[recipient.uniqueId] = Interlocutor(sender.uniqueId, sender.name)

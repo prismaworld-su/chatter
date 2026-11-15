@@ -42,7 +42,7 @@ class Chatter : JavaPlugin() {
         server.onlinePlayers.forEach(preferences::load)
 
         val modules = ChatModules()
-        val messenger = PrivateMessenger(server, { settings }, modules)
+        val messenger = PrivateMessenger(server, { settings }, preferences, modules)
 
         server.pluginManager.registerEvents(preferences, this)
         server.pluginManager.registerEvents(ChatListener({ settings }, preferences, modules), this)

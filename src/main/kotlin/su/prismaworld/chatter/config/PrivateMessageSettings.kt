@@ -15,6 +15,8 @@ data class PrivateMessageSettings(
     val playerNotFoundMessage: String,
     val selfMessage: String,
     val noReplyTargetMessage: String,
+    val disabledMessage: String,
+    val recipientDisabledMessage: String,
 ) {
     companion object {
         const val DEFAULT_SOUND = "minecraft:block.note_block.pling"
@@ -29,6 +31,8 @@ data class PrivateMessageSettings(
             playerNotFoundMessage = message(config, "player-not-found"),
             selfMessage = message(config, "self"),
             noReplyTargetMessage = message(config, "no-reply-target"),
+            disabledMessage = message(config, "disabled"),
+            recipientDisabledMessage = message(config, "recipient-disabled"),
         )
 
         private fun message(config: ConfigurationSection, id: String) =

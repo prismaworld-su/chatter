@@ -106,7 +106,7 @@ class ChatMenu(
     private companion object {
         val MINI_MESSAGE = MiniMessage.miniMessage()
 
-        const val ROWS = 3
+        const val ROWS = 4
         const val CHANNEL_SLOT = 10
 
         val TOGGLE_SLOTS = mapOf(
@@ -115,6 +115,8 @@ class ChatMenu(
             ChatToggle.DEATH_MESSAGES to 14,
             ChatToggle.ADVANCEMENTS to 15,
             ChatToggle.MENTION_SOUND to 16,
+            ChatToggle.PRIVATE_MESSAGES to 21,
+            ChatToggle.PRIVATE_MESSAGE_SOUND to 23,
         )
         val SLOT_TOGGLES = TOGGLE_SLOTS.entries.associate { (toggle, slot) -> slot to toggle }
 
@@ -124,6 +126,8 @@ class ChatMenu(
             ChatToggle.DEATH_MESSAGES to Material.SKELETON_SKULL,
             ChatToggle.ADVANCEMENTS to Material.KNOWLEDGE_BOOK,
             ChatToggle.MENTION_SOUND to Material.BELL,
+            ChatToggle.PRIVATE_MESSAGES to Material.WRITABLE_BOOK,
+            ChatToggle.PRIVATE_MESSAGE_SOUND to Material.NOTE_BLOCK,
         )
 
         val CLICK_SOUND: Sound = Sound.sound(

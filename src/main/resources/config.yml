@@ -19,6 +19,10 @@ default-preferences:
   advancements: true
   # Слышать звук, когда ник игрока упоминают в чате.
   mention-sound: true
+  # Получать и отправлять личные сообщения.
+  private-messages: true
+  # Слышать звук при получении личного сообщения.
+  private-message-sound: true
 
 local:
   # Радиус слышимости локального чата в блоках (только в пределах одного мира).
@@ -75,7 +79,7 @@ private-messages:
   format-received: "<gray>[<white><sender></white> → <white>Вам</white>]</gray> <message>"
   # Подсказка при наведении на ник собеседника. Пустая строка отключает подсказку.
   reply-hover: "<gray>Нажмите, чтобы написать игроку</gray>"
-  # Звук, который слышит получатель.
+  # Звук, который слышит получатель. Игрок может отключить его в меню /chat.
   sound:
     # Ключ звука: https://minecraft.wiki/w/Sounds.json
     sound: "minecraft:block.note_block.pling"
@@ -90,6 +94,10 @@ private-messages:
     player-not-found: "<red>Игрок <white><player></white> не в сети.</red>"
     self: "<red>Нельзя написать самому себе.</red>"
     no-reply-target: "<red>Вам некому ответить: вы ещё ни с кем не переписывались.</red>"
+    # Отправляется, если у отправителя личные сообщения отключены в настройках.
+    disabled: "<red>Личные сообщения отключены в ваших настройках. Включить: /chat</red>"
+    # Плейсхолдер <player> - ник получателя.
+    recipient-disabled: "<red>Игрок <white><player></white> не принимает личные сообщения.</red>"
 
 messages:
   # Отправляется игроку, если его локальное сообщение никто не услышал. Пустая строка отключает уведомление.
@@ -168,6 +176,24 @@ menu:
       lore:
         - "<gray>Звук, когда ваш ник</gray>"
         - "<gray>упоминают в чате.</gray>"
+        - ""
+        - "<gray>Сейчас: <state></gray>"
+        - ""
+        - "<yellow>Нажмите, чтобы переключить</yellow>"
+    private-messages:
+      name: "<yellow>Личные сообщения</yellow>"
+      lore:
+        - "<gray>Получать и отправлять</gray>"
+        - "<gray>личные сообщения (/w, /r).</gray>"
+        - ""
+        - "<gray>Сейчас: <state></gray>"
+        - ""
+        - "<yellow>Нажмите, чтобы переключить</yellow>"
+    private-message-sound:
+      name: "<yellow>Звук личных сообщений</yellow>"
+      lore:
+        - "<gray>Звук при получении</gray>"
+        - "<gray>личного сообщения.</gray>"
         - ""
         - "<gray>Сейчас: <state></gray>"
         - ""
