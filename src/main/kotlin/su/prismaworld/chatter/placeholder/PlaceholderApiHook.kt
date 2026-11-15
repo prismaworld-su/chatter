@@ -3,19 +3,35 @@ package su.prismaworld.chatter.placeholder
 import me.clip.placeholderapi.PlaceholderAPI
 import org.bukkit.entity.Player
 import org.bukkit.plugin.Plugin
+import su.prismaworld.chatter.config.ChatSettings
+import su.prismaworld.chatter.preference.PreferenceManager
 import java.util.concurrent.ConcurrentHashMap
 import java.util.logging.Level
 
 /**
- * Интеграция с PlaceholderAPI: значения плейсхолдеров для форматов.
+ * Интеграция с PlaceholderAPI: значения плейсхолдеров для форматов и регистрация плейсхолдеров `%chatter_...%`.
  *
  * Классы PlaceholderAPI загружаются только при обращении к ним, поэтому создавать этот объект можно,
  * только если PlaceholderAPI включён.
  */
-class PlaceholderApiHook(private val plugin: Plugin) : PlaceholderSource {
+class PlaceholderApiHook(
+    private val plugin: Plugin,
+    settings: () -> ChatSettings,
+    preferences: PreferenceManager,
+) : PlaceholderSource {
+
+    private val expansion = ChatterExpansion(plugin, settings, preferences)
 
     /** Плейсхолдеры, ошибка которых уже записана в лог, чтобы не повторять её в каждом сообщении. */
     private val failedPlaceholders = ConcurrentHashMap.newKeySet<String>()
+
+    /** Регистрирует плейсхолдеры `%chatter_...%`. */
+    fun register(): Boolean = expansion.register()
+
+    /** Удаляет плейсхолдеры `%chatter_...%`, чтобы PlaceholderAPI не обращался к выключенному плагину. */
+    fun unregister() {
+        if (expansion.isRegistered) expansion.unregister()
+    }
 
     /**
      * Ошибка в расширении PlaceholderAPI не должна мешать отправке сообщения,

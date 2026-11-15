@@ -37,6 +37,9 @@ class Chatter : JavaPlugin() {
     lateinit var settings: ChatSettings
         private set
 
+    /** Интеграция с PlaceholderAPI, если он установлен. */
+    private var placeholderApi: PlaceholderApiHook? = null
+
     fun loadSettings() {
         saveDefaultConfig()
         reloadConfig()
@@ -53,7 +56,7 @@ class Chatter : JavaPlugin() {
         server.onlinePlayers.forEach(preferences::load)
 
         val modules = ChatModules()
-        val placeholders = FormatPlaceholders(hookPlaceholderApi())
+        val placeholders = FormatPlaceholders(hookPlaceholderApi(preferences))
         val audience = ChatAudience(preferences)
         val messenger = PrivateMessenger(server, { settings }, preferences, modules, placeholders)
         val roleplay = RoleplayBroadcaster(server, { settings }, audience, modules, placeholders)
@@ -91,6 +94,12 @@ class Chatter : JavaPlugin() {
     }
 
     override fun onDisable() {
+        // Если PlaceholderAPI уже выключен, его расширения удалены вместе с ним.
+        if (server.pluginManager.isPluginEnabled(PLACEHOLDER_API)) {
+            placeholderApi?.unregister()
+        }
+        placeholderApi = null
+
         // После отключения плагина клики по меню никто не обработает, поэтому открытые меню закрываются.
         server.onlinePlayers
             .filter { it.openInventory.topInventory.getHolder(false) is ChatMenu }
@@ -98,13 +107,19 @@ class Chatter : JavaPlugin() {
     }
 
     /**
-     * Подключается к PlaceholderAPI, если он установлен, и возвращает источник плейсхолдеров для форматов.
-     * Без PlaceholderAPI плейсхолдеры не подставляются.
+     * Подключается к PlaceholderAPI, если он установлен: регистрирует плейсхолдеры `%chatter_...%`
+     * и возвращает источник плейсхолдеров для форматов. Без PlaceholderAPI плейсхолдеры не подставляются.
      */
-    private fun hookPlaceholderApi(): PlaceholderSource {
+    private fun hookPlaceholderApi(preferences: PreferenceManager): PlaceholderSource {
         if (!server.pluginManager.isPluginEnabled(PLACEHOLDER_API)) return PlaceholderSource.NONE
 
-        logger.info("PlaceholderAPI найден: плейсхолдеры в форматах включены")
-        return PlaceholderApiHook(this)
+        val hook = PlaceholderApiHook(this, { settings }, preferences)
+        if (hook.register()) {
+            logger.info("PlaceholderAPI найден: плейсхолдеры в форматах и %chatter_...% включены")
+        } else {
+            logger.warning("PlaceholderAPI найден, но зарегистрировать плейсхолдеры %chatter_...% не удалось")
+        }
+        placeholderApi = hook
+        return hook
     }
 }

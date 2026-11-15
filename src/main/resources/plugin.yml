@@ -5,7 +5,7 @@ main: su.prismaworld.chatter.Chatter
 api-version: '26.3'
 load: POSTWORLD
 
-# Необязательная зависимость: плейсхолдеры в форматах.
+# Необязательная зависимость: плейсхолдеры в форматах и %chatter_...%.
 softdepend: [ PlaceholderAPI ]
 
 authors: [ loseex ]
