@@ -15,6 +15,9 @@ import su.prismaworld.chatter.listener.ServerMessageListener
 import su.prismaworld.chatter.menu.ChatMenu
 import su.prismaworld.chatter.menu.ChatMenuListener
 import su.prismaworld.chatter.module.ChatModules
+import su.prismaworld.chatter.placeholder.FormatPlaceholders
+import su.prismaworld.chatter.placeholder.PlaceholderApiHook
+import su.prismaworld.chatter.placeholder.PlaceholderSource
 import su.prismaworld.chatter.preference.PreferenceManager
 import su.prismaworld.chatter.privatemessage.PrivateMessenger
 import su.prismaworld.chatter.roleplay.RoleplayAction
@@ -25,12 +28,17 @@ class Chatter : JavaPlugin() {
     companion object {
         lateinit var instance: Chatter
             private set
+
+        private const val PLACEHOLDER_API = "PlaceholderAPI"
     }
 
     /** Текущие настройки. Читаются из асинхронного потока чата, поэтому поле volatile. */
     @Volatile
     lateinit var settings: ChatSettings
         private set
+
+    /** Интеграция с PlaceholderAPI, если он установлен. */
+    private var placeholderApi: PlaceholderApiHook? = null
 
     fun loadSettings() {
         saveDefaultConfig()
@@ -48,12 +56,13 @@ class Chatter : JavaPlugin() {
         server.onlinePlayers.forEach(preferences::load)
 
         val modules = ChatModules()
+        val placeholders = FormatPlaceholders(hookPlaceholderApi(preferences))
         val audience = ChatAudience(preferences)
-        val messenger = PrivateMessenger(server, { settings }, preferences, modules)
-        val roleplay = RoleplayBroadcaster(server, { settings }, audience, modules)
+        val messenger = PrivateMessenger(server, { settings }, preferences, modules, placeholders)
+        val roleplay = RoleplayBroadcaster(server, { settings }, audience, modules, placeholders)
 
         server.pluginManager.registerEvents(preferences, this)
-        server.pluginManager.registerEvents(ChatListener({ settings }, preferences, audience, modules), this)
+        server.pluginManager.registerEvents(ChatListener({ settings }, preferences, audience, modules, placeholders), this)
         server.pluginManager.registerEvents(ServerMessageListener(server, preferences), this)
         server.pluginManager.registerEvents(ChatMenuListener(), this)
         server.pluginManager.registerEvents(messenger, this)
@@ -85,9 +94,32 @@ class Chatter : JavaPlugin() {
     }
 
     override fun onDisable() {
+        // Если PlaceholderAPI уже выключен, его расширения удалены вместе с ним.
+        if (server.pluginManager.isPluginEnabled(PLACEHOLDER_API)) {
+            placeholderApi?.unregister()
+        }
+        placeholderApi = null
+
         // После отключения плагина клики по меню никто не обработает, поэтому открытые меню закрываются.
         server.onlinePlayers
             .filter { it.openInventory.topInventory.getHolder(false) is ChatMenu }
             .forEach { it.closeInventory() }
+    }
+
+    /**
+     * Подключается к PlaceholderAPI, если он установлен: регистрирует плейсхолдеры `%chatter_...%`
+     * и возвращает источник плейсхолдеров для форматов. Без PlaceholderAPI плейсхолдеры не подставляются.
+     */
+    private fun hookPlaceholderApi(preferences: PreferenceManager): PlaceholderSource {
+        if (!server.pluginManager.isPluginEnabled(PLACEHOLDER_API)) return PlaceholderSource.NONE
+
+        val hook = PlaceholderApiHook(this, { settings }, preferences)
+        if (hook.register()) {
+            logger.info("PlaceholderAPI найден: плейсхолдеры в форматах и %chatter_...% включены")
+        } else {
+            logger.warning("PlaceholderAPI найден, но зарегистрировать плейсхолдеры %chatter_...% не удалось")
+        }
+        placeholderApi = hook
+        return hook
     }
 }

@@ -10,6 +10,7 @@ import su.prismaworld.chatter.channel.ChatAudience
 import su.prismaworld.chatter.channel.ChatChannel
 import su.prismaworld.chatter.config.ChatSettings
 import su.prismaworld.chatter.module.ChatModules
+import su.prismaworld.chatter.placeholder.FormatPlaceholders
 
 /**
  * Отправляет отыгрыш из команд (`/me`, `/gme` и т.д.) по тем же правилам, что и отыгрыш из чата:
@@ -22,6 +23,7 @@ class RoleplayBroadcaster(
     private val settings: () -> ChatSettings,
     private val audience: ChatAudience,
     private val modules: ChatModules,
+    private val placeholders: FormatPlaceholders,
 ) {
 
     private val miniMessage = MiniMessage.miniMessage()
@@ -42,7 +44,7 @@ class RoleplayBroadcaster(
             return
         }
 
-        val rendered = RoleplayRenderer(action, channel, settings.roleplay).render(sender, sender.displayName(), message)
+        val rendered = RoleplayRenderer(action, channel, settings.roleplay, placeholders).render(sender, sender.displayName(), message)
         val canHear = audience.canHear(sender, channel, settings)
         val recipients = server.onlinePlayers.filter { it != sender && canHear(it) }
 

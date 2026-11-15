@@ -15,6 +15,7 @@ import su.prismaworld.chatter.channel.ChatChannel
 import su.prismaworld.chatter.channel.ChatRoute
 import su.prismaworld.chatter.config.ChatSettings
 import su.prismaworld.chatter.module.ChatModules
+import su.prismaworld.chatter.placeholder.FormatPlaceholders
 import su.prismaworld.chatter.preference.PreferenceManager
 import su.prismaworld.chatter.roleplay.RoleplayRenderer
 
@@ -26,6 +27,7 @@ import su.prismaworld.chatter.roleplay.RoleplayRenderer
  * - Кто слышит сообщение, определяет [ChatAudience]: локальное - игроки поблизости,
  *   глобальное - все, у кого глобальный чат не отключён в настройках.
  * - Модули (`:loc:`, `:item:`) заменяются интерактивными компонентами, см. [ChatModules].
+ * - В форматах подставляются плейсхолдеры отправителя, см. [FormatPlaceholders].
  * - Игроки с включённым звуком упоминания слышат звук, когда их ник есть в сообщении.
  */
 class ChatListener(
@@ -33,6 +35,7 @@ class ChatListener(
     private val preferences: PreferenceManager,
     private val audience: ChatAudience,
     private val modules: ChatModules,
+    private val placeholders: FormatPlaceholders,
 ) : Listener {
 
     private val miniMessage = MiniMessage.miniMessage()
@@ -79,7 +82,7 @@ class ChatListener(
         val renderer = if (action == null) {
             FormatRenderer(format(route.channel, settings))
         } else {
-            RoleplayRenderer(action, route.channel, settings.roleplay)
+            RoleplayRenderer(action, route.channel, settings.roleplay, placeholders)
         }
         event.renderer(ChatRenderer.viewerUnaware(renderer))
     }
@@ -116,7 +119,7 @@ class ChatListener(
     private inner class FormatRenderer(private val format: String) : ChatRenderer.ViewerUnaware {
         override fun render(source: Player, sourceDisplayName: Component, message: Component): Component =
             miniMessage.deserialize(
-                format,
+                placeholders.apply(format, source),
                 Placeholder.component("player", sourceDisplayName),
                 Placeholder.component("message", message),
             )

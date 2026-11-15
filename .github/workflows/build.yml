@@ -36,8 +36,9 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
 
-      - name: Build shadowJar
-        run: ./gradlew shadowJar
+      # build собирает shadowJar и запускает тесты.
+      - name: Build and test
+        run: ./gradlew build
 
       - name: Upload plugin jar
         uses: actions/upload-artifact@v7
