@@ -32,6 +32,7 @@ data class ChatSettings(
     val channelNames: Map<ChatChannel, String>,
     val menu: MenuSettings,
     val modules: ModuleSettings,
+    val privateMessages: PrivateMessageSettings,
 ) {
     /** Квадрат радиуса, чтобы сравнивать расстояния без извлечения корня. */
     val localRadiusSquared: Double = localRadius * localRadius
@@ -82,6 +83,7 @@ data class ChatSettings(
                 },
                 menu = MenuSettings.load(config),
                 modules = ModuleSettings.load(config, logger),
+                privateMessages = PrivateMessageSettings.load(config, logger),
             )
         }
     }
