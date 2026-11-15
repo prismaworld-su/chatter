@@ -28,11 +28,13 @@ class PreferenceManager(plugin: Plugin, private val settings: () -> ChatSettings
     private data class Preferences(
         val channel: ChatChannel? = null,
         val toggles: Map<ChatToggle, Boolean> = emptyMap(),
+        val socialSpy: Boolean = false,
     )
 
     // Ключ канала совпадает с ранее использовавшимся, чтобы сохранить уже сделанный игроками выбор.
     private val channelKey = NamespacedKey(plugin, "channel")
     private val toggleKeys = ChatToggle.entries.associateWith { NamespacedKey(plugin, it.id) }
+    private val socialSpyKey = NamespacedKey(plugin, "social-spy")
     private val cache = ConcurrentHashMap<UUID, Preferences>()
 
     /** Канал для сообщений без префикса. Безопасно вызывать из любого потока. */
@@ -74,6 +76,21 @@ class PreferenceManager(plugin: Plugin, private val settings: () -> ChatSettings
         return enabled
     }
 
+    /**
+     * Включена ли у игрока слежка за личными сообщениями. Безопасно вызывать из любого потока.
+     * Право `chatter.spy` здесь не проверяется: его проверяет вызывающий код.
+     */
+    fun isSocialSpy(player: Player): Boolean = cache[player.uniqueId]?.socialSpy ?: false
+
+    /** Переключает слежку за личными сообщениями и возвращает её новое состояние. Вызывать только из основного потока. */
+    fun toggleSocialSpy(player: Player): Boolean {
+        val enabled = !isSocialSpy(player)
+
+        player.persistentDataContainer.set(socialSpyKey, PersistentDataType.BOOLEAN, enabled)
+        update(player) { it.copy(socialSpy = enabled) }
+        return enabled
+    }
+
     /** Загружает настройки игрока в кэш. Вызывать только из основного потока. */
     fun load(player: Player) {
         val container = player.persistentDataContainer
@@ -83,7 +100,8 @@ class PreferenceManager(plugin: Plugin, private val settings: () -> ChatSettings
                 container.get(key, PersistentDataType.BOOLEAN)?.let { put(toggle, it) }
             }
         }
-        cache[player.uniqueId] = Preferences(channel, toggles)
+        val socialSpy = container.get(socialSpyKey, PersistentDataType.BOOLEAN) ?: false
+        cache[player.uniqueId] = Preferences(channel, toggles, socialSpy)
     }
 
     @EventHandler(priority = EventPriority.LOWEST)

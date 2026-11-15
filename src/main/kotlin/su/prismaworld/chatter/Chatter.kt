@@ -5,6 +5,7 @@ import su.prismaworld.chatter.command.ChatCommand
 import su.prismaworld.chatter.command.ChatterCommand
 import su.prismaworld.chatter.command.MessageCommand
 import su.prismaworld.chatter.command.ReplyCommand
+import su.prismaworld.chatter.command.SocialSpyCommand
 import su.prismaworld.chatter.config.ChatSettings
 import su.prismaworld.chatter.listener.ChatListener
 import su.prismaworld.chatter.listener.ServerMessageListener
@@ -59,6 +60,7 @@ class Chatter : JavaPlugin() {
             MessageCommand({ settings }, messenger),
         )
         registerCommand("r", "Ответ последнему собеседнику в личных сообщениях", ReplyCommand({ settings }, messenger))
+        registerCommand("socialspy", "Слежка за личными сообщениями", SocialSpyCommand({ settings }, preferences))
     }
 
     override fun onDisable() {

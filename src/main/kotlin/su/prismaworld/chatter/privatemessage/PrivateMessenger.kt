@@ -26,6 +26,7 @@ import java.util.UUID
  * - Игроки, скрытые от отправителя (например, в ванише), считаются не в сети.
  * - Отправить или получить сообщение можно, только если личные сообщения включены в настройках `/chat`.
  * - В сообщениях работают модули (`:loc:`, `:item:`), см. [ChatModules].
+ * - Игроки с правом [SPY_PERMISSION] и включённой слежкой видят чужие личные сообщения.
  * - Для `/r` запоминается последний собеседник каждого игрока: им становятся и получатель, и отправитель.
  *   Собеседник игрока забывается при его выходе с сервера.
  *
@@ -125,6 +126,10 @@ class PrivateMessenger(
             recipient.playSound(pm.sound, Sound.Emitter.self())
         }
 
+        server.onlinePlayers
+            .filter { it != sender && it != recipient && it.hasPermission(SPY_PERMISSION) && preferences.isSocialSpy(it) }
+            .forEach { sendFormatted(it, pm.formatSpy, senderName, recipientName, message) }
+
         interlocutors[sender.uniqueId] = Interlocutor(recipient.uniqueId, recipient.name)
         interlocutors[recipient.uniqueId] = Interlocutor(sender.uniqueId, sender.name)
     }
@@ -156,5 +161,8 @@ class PrivateMessenger(
     companion object {
         /** Основная команда личных сообщений. */
         const val COMMAND = "w"
+
+        /** Право на слежку за чужими личными сообщениями. */
+        const val SPY_PERMISSION = "chatter.spy"
     }
 }
