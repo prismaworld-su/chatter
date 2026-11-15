@@ -7,14 +7,21 @@ import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder
 import org.bukkit.entity.Player
 import su.prismaworld.chatter.channel.ChatChannel
 import su.prismaworld.chatter.config.RoleplaySettings
+import su.prismaworld.chatter.placeholder.FormatPlaceholders
 import java.util.concurrent.ThreadLocalRandom
 
 /**
  * Оформляет сообщение отыгрыша по формату из конфига. Используется и чатом, и командами.
  *
  * Исход `/try` определяется один раз при создании, поэтому все получатели видят одинаковый результат.
+ * В формате подставляются плейсхолдеры отправителя, см. [FormatPlaceholders].
  */
-class RoleplayRenderer(action: RoleplayAction, channel: ChatChannel, settings: RoleplaySettings) : ChatRenderer.ViewerUnaware {
+class RoleplayRenderer(
+    action: RoleplayAction,
+    channel: ChatChannel,
+    settings: RoleplaySettings,
+    private val placeholders: FormatPlaceholders,
+) : ChatRenderer.ViewerUnaware {
 
     private val format = settings.format(channel, action)
     private val result = when (action) {
@@ -24,7 +31,7 @@ class RoleplayRenderer(action: RoleplayAction, channel: ChatChannel, settings: R
 
     override fun render(source: Player, sourceDisplayName: Component, message: Component): Component =
         MINI_MESSAGE.deserialize(
-            format,
+            placeholders.apply(format, source),
             Placeholder.component("player", sourceDisplayName),
             Placeholder.component("message", message),
             Placeholder.parsed("result", result),

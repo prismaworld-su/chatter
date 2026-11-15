@@ -6,6 +6,7 @@ import net.kyori.adventure.text.event.ClickEvent
 import net.kyori.adventure.text.event.HoverEvent
 import net.kyori.adventure.text.minimessage.MiniMessage
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
 import org.bukkit.Server
 import org.bukkit.command.CommandSender
@@ -16,6 +17,7 @@ import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerQuitEvent
 import su.prismaworld.chatter.config.ChatSettings
 import su.prismaworld.chatter.module.ChatModules
+import su.prismaworld.chatter.placeholder.FormatPlaceholders
 import su.prismaworld.chatter.preference.ChatToggle
 import su.prismaworld.chatter.preference.PreferenceManager
 import java.util.UUID
@@ -26,6 +28,8 @@ import java.util.UUID
  * - Игроки, скрытые от отправителя (например, в ванише), считаются не в сети.
  * - Отправить или получить сообщение можно, только если личные сообщения включены в настройках `/chat`.
  * - В сообщениях работают модули (`:loc:`, `:item:`), см. [ChatModules].
+ * - В форматах подставляются плейсхолдеры: `%...%` - отправителя, `<recipient_papi:...>` - получателя,
+ *   см. [FormatPlaceholders].
  * - Игроки с правом [SPY_PERMISSION] и включённой слежкой видят чужие личные сообщения.
  * - Для `/r` запоминается последний собеседник каждого игрока: им становятся и получатель, и отправитель.
  *   Собеседник игрока забывается при его выходе с сервера.
@@ -37,6 +41,7 @@ class PrivateMessenger(
     private val settings: () -> ChatSettings,
     private val preferences: PreferenceManager,
     private val modules: ChatModules,
+    private val placeholders: FormatPlaceholders,
 ) : Listener {
 
     /** Ник хранится, чтобы назвать собеседника, даже когда он уже вышел с сервера. */
@@ -119,30 +124,43 @@ class PrivateMessenger(
 
         val senderName = sender.displayName()
         val recipientName = recipient.displayName()
+        val recipientPlaceholders = placeholders.tag(RECIPIENT_PLACEHOLDER_TAG, recipient)
+        fun formatted(format: String, senderComponent: Component, recipientComponent: Component): Component? =
+            render(placeholders.apply(format, sender), senderComponent, recipientComponent, message, recipientPlaceholders)
+
         // Каждый участник может нажать на ник собеседника, чтобы написать ему.
-        sendFormatted(sender, pm.formatSent, senderName, clickableName(recipient, pm.replyHover), message)
-        sendFormatted(recipient, pm.formatReceived, clickableName(sender, pm.replyHover), recipientName, message)
+        formatted(pm.formatSent, senderName, clickableName(recipient, pm.replyHover))?.let(sender::sendMessage)
+        formatted(pm.formatReceived, clickableName(sender, pm.replyHover), recipientName)?.let(recipient::sendMessage)
         if (preferences.isEnabled(recipient, ChatToggle.PRIVATE_MESSAGE_SOUND)) {
             recipient.playSound(pm.sound, Sound.Emitter.self())
         }
 
-        server.onlinePlayers
+        val spies = server.onlinePlayers
             .filter { it != sender && it != recipient && it.hasPermission(SPY_PERMISSION) && preferences.isSocialSpy(it) }
-            .forEach { sendFormatted(it, pm.formatSpy, senderName, recipientName, message) }
+        if (spies.isNotEmpty()) {
+            // Сообщение для слежки одинаково для всех, поэтому оформляется один раз.
+            formatted(pm.formatSpy, senderName, recipientName)?.let { spyMessage -> spies.forEach { it.sendMessage(spyMessage) } }
+        }
 
         interlocutors[sender.uniqueId] = Interlocutor(recipient.uniqueId, recipient.name)
         interlocutors[recipient.uniqueId] = Interlocutor(sender.uniqueId, sender.name)
     }
 
-    private fun sendFormatted(viewer: Player, format: String, sender: Component, recipient: Component, message: Component) {
-        if (format.isEmpty()) return
-        viewer.sendMessage(
-            miniMessage.deserialize(
-                format,
-                Placeholder.component("sender", sender),
-                Placeholder.component("recipient", recipient),
-                Placeholder.component("message", message),
-            )
+    /** Оформляет сообщение по формату. Пустой формат отключает сообщение, тогда возвращается `null`. */
+    private fun render(
+        format: String,
+        sender: Component,
+        recipient: Component,
+        message: Component,
+        recipientPlaceholders: TagResolver,
+    ): Component? {
+        if (format.isEmpty()) return null
+        return miniMessage.deserialize(
+            format,
+            Placeholder.component("sender", sender),
+            Placeholder.component("recipient", recipient),
+            Placeholder.component("message", message),
+            recipientPlaceholders,
         )
     }
 
@@ -164,5 +182,8 @@ class PrivateMessenger(
 
         /** Право на слежку за чужими личными сообщениями. */
         const val SPY_PERMISSION = "chatter.spy"
+
+        /** Тег для плейсхолдеров получателя в форматах: `<recipient_papi:luckperms_prefix>`. */
+        const val RECIPIENT_PLACEHOLDER_TAG = "recipient_papi"
     }
 }
