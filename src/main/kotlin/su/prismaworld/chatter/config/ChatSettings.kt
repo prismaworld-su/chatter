@@ -33,6 +33,7 @@ data class ChatSettings(
     val menu: MenuSettings,
     val modules: ModuleSettings,
     val privateMessages: PrivateMessageSettings,
+    val roleplay: RoleplaySettings,
 ) {
     /** Квадрат радиуса, чтобы сравнивать расстояния без извлечения корня. */
     val localRadiusSquared: Double = localRadius * localRadius
@@ -84,6 +85,7 @@ data class ChatSettings(
                 menu = MenuSettings.load(config),
                 modules = ModuleSettings.load(config, logger),
                 privateMessages = PrivateMessageSettings.load(config, logger),
+                roleplay = RoleplaySettings.load(config),
             )
         }
     }

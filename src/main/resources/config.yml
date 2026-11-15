@@ -104,6 +104,30 @@ private-messages:
     spy-enabled: "<green>Слежка за личными сообщениями включена.</green>"
     spy-disabled: "<yellow>Слежка за личными сообщениями выключена.</yellow>"
 
+# Отыгрыш (РП) - действия персонажа от третьего лица.
+#   /me <действие>  - действие: "* Ник открыл дверь".
+#   /try <действие> - попытка со случайным исходом 50 на 50: "* Ник открыл дверь [Удачно]".
+#   /do <описание>  - описание окружения или результата: "* Дверь открыта (Ник)".
+# Эти команды отправляют отыгрыш в локальный чат, а /gme, /gtry и /gdo - в глобальный.
+# В отыгрыше работают модули (:loc:, :item:).
+roleplay:
+  # Плейсхолдеры: <player> - отображаемое имя игрока, <message> - текст отыгрыша, <result> - исход /try.
+  formats:
+    local:
+      me: "<gray>[L]</gray> <light_purple>* <player> <message></light_purple>"
+      try: "<gray>[L]</gray> <light_purple>* <player> <message></light_purple> <dark_gray>[</dark_gray><result><dark_gray>]</dark_gray>"
+      do: "<gray>[L]</gray> <light_purple>* <message> <gray>(<player>)</gray></light_purple>"
+    global:
+      me: "<gold>[G]</gold> <light_purple>* <player> <message></light_purple>"
+      try: "<gold>[G]</gold> <light_purple>* <player> <message></light_purple> <dark_gray>[</dark_gray><result><dark_gray>]</dark_gray>"
+      do: "<gold>[G]</gold> <light_purple>* <message> <gray>(<player>)</gray></light_purple>"
+  # Исходы /try.
+  try-success: "<green>Удачно</green>"
+  try-failure: "<red>Неудачно</red>"
+  messages:
+    # Плейсхолдер <command> - название команды. Пустая строка отключает сообщение.
+    usage: '<red>Использование: /<command> \<текст></red>'
+
 messages:
   # Отправляется игроку, если его локальное сообщение никто не услышал. Пустая строка отключает уведомление.
   # Доступен плейсхолдер <prefix> - префикс смены канала.

@@ -2,10 +2,12 @@ package su.prismaworld.chatter
 
 import org.bukkit.plugin.java.JavaPlugin
 import su.prismaworld.chatter.channel.ChatAudience
+import su.prismaworld.chatter.channel.ChatChannel
 import su.prismaworld.chatter.command.ChatCommand
 import su.prismaworld.chatter.command.ChatterCommand
 import su.prismaworld.chatter.command.MessageCommand
 import su.prismaworld.chatter.command.ReplyCommand
+import su.prismaworld.chatter.command.RoleplayCommand
 import su.prismaworld.chatter.command.SocialSpyCommand
 import su.prismaworld.chatter.config.ChatSettings
 import su.prismaworld.chatter.listener.ChatListener
@@ -15,6 +17,8 @@ import su.prismaworld.chatter.menu.ChatMenuListener
 import su.prismaworld.chatter.module.ChatModules
 import su.prismaworld.chatter.preference.PreferenceManager
 import su.prismaworld.chatter.privatemessage.PrivateMessenger
+import su.prismaworld.chatter.roleplay.RoleplayAction
+import su.prismaworld.chatter.roleplay.RoleplayBroadcaster
 
 class Chatter : JavaPlugin() {
 
@@ -46,6 +50,7 @@ class Chatter : JavaPlugin() {
         val modules = ChatModules()
         val audience = ChatAudience(preferences)
         val messenger = PrivateMessenger(server, { settings }, preferences, modules)
+        val roleplay = RoleplayBroadcaster(server, { settings }, audience, modules)
 
         server.pluginManager.registerEvents(preferences, this)
         server.pluginManager.registerEvents(ChatListener({ settings }, preferences, audience, modules), this)
@@ -63,6 +68,20 @@ class Chatter : JavaPlugin() {
         )
         registerCommand("r", "Ответ последнему собеседнику в личных сообщениях", ReplyCommand({ settings }, messenger))
         registerCommand("socialspy", "Слежка за личными сообщениями", SocialSpyCommand({ settings }, preferences))
+        // Ванильная /me заменяется и остаётся доступна как /minecraft:me.
+        for (channel in ChatChannel.entries) {
+            val chat = when (channel) {
+                ChatChannel.LOCAL -> "локальный"
+                ChatChannel.GLOBAL -> "глобальный"
+            }
+            for (action in RoleplayAction.entries) {
+                registerCommand(
+                    action.command(channel),
+                    "${action.description} в $chat чат",
+                    RoleplayCommand(action, channel, { settings }, roleplay),
+                )
+            }
+        }
     }
 
     override fun onDisable() {
