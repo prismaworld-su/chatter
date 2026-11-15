@@ -24,10 +24,11 @@ data class PrivateMessageSettings(
     companion object {
         const val DEFAULT_SOUND = "minecraft:block.note_block.pling"
 
+        // Значения без явного default: если ключа нет в конфиге сервера, берётся значение из config.yml плагина.
         fun load(config: ConfigurationSection, logger: Logger) = PrivateMessageSettings(
-            formatSent = config.getString("private-messages.format-sent", "-> <recipient>: <message>").orEmpty(),
-            formatReceived = config.getString("private-messages.format-received", "<sender> ->: <message>").orEmpty(),
-            formatSpy = config.getString("private-messages.format-spy", "<sender> -> <recipient>: <message>").orEmpty(),
+            formatSent = config.getString("private-messages.format-sent").orEmpty(),
+            formatReceived = config.getString("private-messages.format-received").orEmpty(),
+            formatSpy = config.getString("private-messages.format-spy").orEmpty(),
             replyHover = config.getString("private-messages.reply-hover").orEmpty(),
             sound = loadSound(config, "private-messages.sound", DEFAULT_SOUND, logger),
             usageMessage = message(config, "usage"),
