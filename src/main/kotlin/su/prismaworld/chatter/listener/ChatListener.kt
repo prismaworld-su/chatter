@@ -16,11 +16,12 @@ import su.prismaworld.chatter.channel.ChatRoute
 import su.prismaworld.chatter.config.ChatSettings
 import su.prismaworld.chatter.module.ChatModules
 import su.prismaworld.chatter.preference.PreferenceManager
+import su.prismaworld.chatter.roleplay.RoleplayRenderer
 
 /**
- * Разделяет чат на локальный и глобальный.
+ * Разделяет чат на локальный и глобальный и отправляет отыгрыш по префиксам.
  *
- * - Канал и текст без префиксов определяются по правилам [ChatRoute]: сообщение без префикса уходит
+ * - Канал, отыгрыш и текст без префиксов определяются по правилам [ChatRoute]: сообщение без префикса уходит
  *   в канал, выбранный игроком через `/chat` (по умолчанию [ChatSettings.defaultChannel]).
  * - Кто слышит сообщение, определяет [ChatAudience]: локальное - игроки поблизости,
  *   глобальное - все, у кого глобальный чат не отключён в настройках.
@@ -74,7 +75,13 @@ class ChatListener(
         val canHear = audience.canHear(sender, route.channel, settings)
         event.viewers().removeIf { viewer -> viewer is Player && !canHear(viewer) }
 
-        event.renderer(ChatRenderer.viewerUnaware(FormatRenderer(format(route.channel, settings))))
+        val action = route.roleplay
+        val renderer = if (action == null) {
+            FormatRenderer(format(route.channel, settings))
+        } else {
+            RoleplayRenderer(action, route.channel, settings.roleplay)
+        }
+        event.renderer(ChatRenderer.viewerUnaware(renderer))
     }
 
     /**

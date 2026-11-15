@@ -85,7 +85,7 @@ data class ChatSettings(
                 menu = MenuSettings.load(config),
                 modules = ModuleSettings.load(config, logger),
                 privateMessages = PrivateMessageSettings.load(config, logger),
-                roleplay = RoleplaySettings.load(config),
+                roleplay = RoleplaySettings.load(config, prefix, logger),
             )
         }
     }
