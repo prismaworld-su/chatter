@@ -1,7 +1,5 @@
 package su.prismaworld.chatter.config
 
-import net.kyori.adventure.key.InvalidKeyException
-import net.kyori.adventure.key.Key
 import net.kyori.adventure.sound.Sound
 import org.bukkit.configuration.ConfigurationSection
 import su.prismaworld.chatter.channel.ChatChannel
@@ -69,7 +67,7 @@ data class ChatSettings(
                 localFormat = config.getString("local.format", "<player>: <message>").orEmpty(),
                 globalPrefix = prefix,
                 globalFormat = config.getString("global.format", "<player>: <message>").orEmpty(),
-                mentionSound = loadMentionSound(config, logger),
+                mentionSound = loadSound(config, "mention-sound", DEFAULT_MENTION_SOUND, logger),
                 nobodyHeardMessage = config.getString("messages.nobody-heard").orEmpty(),
                 emptyGlobalMessage = config.getString("messages.empty-global").orEmpty(),
                 emptyMessage = config.getString("messages.empty-message").orEmpty(),
@@ -85,30 +83,6 @@ data class ChatSettings(
                 menu = MenuSettings.load(config),
                 modules = ModuleSettings.load(config, logger),
             )
-        }
-
-        private fun loadMentionSound(config: ConfigurationSection, logger: Logger): Sound {
-            val soundId = config.getString("mention-sound.sound", DEFAULT_MENTION_SOUND).orEmpty()
-            val key = try {
-                Key.key(soundId)
-            } catch (_: InvalidKeyException) {
-                logger.warning("mention-sound.sound \"$soundId\" не является корректным ключом, используется \"$DEFAULT_MENTION_SOUND\"")
-                Key.key(DEFAULT_MENTION_SOUND)
-            }
-
-            var volume = config.getDouble("mention-sound.volume", 1.0)
-            if (!volume.isFinite() || volume < 0.0) {
-                logger.warning("mention-sound.volume должен быть неотрицательным числом, используется 1.0")
-                volume = 1.0
-            }
-
-            var pitch = config.getDouble("mention-sound.pitch", 1.0)
-            if (!pitch.isFinite() || pitch !in 0.0..2.0) {
-                logger.warning("mention-sound.pitch должен быть в диапазоне от 0 до 2, используется 1.0")
-                pitch = 1.0
-            }
-
-            return Sound.sound(key, Sound.Source.PLAYER, volume.toFloat(), pitch.toFloat())
         }
     }
 }
