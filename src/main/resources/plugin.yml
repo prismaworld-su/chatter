@@ -11,3 +11,6 @@ permissions:
   chatter.reload:
     description: Позволяет перезагружать конфигурацию плагина командой /chatter reload
     default: op
+  chatter.spy:
+    description: Позволяет следить за чужими личными сообщениями командой /socialspy
+    default: op
