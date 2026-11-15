@@ -1,6 +1,7 @@
 package su.prismaworld.chatter
 
 import org.bukkit.plugin.java.JavaPlugin
+import su.prismaworld.chatter.channel.ChatAudience
 import su.prismaworld.chatter.command.ChatCommand
 import su.prismaworld.chatter.command.ChatterCommand
 import su.prismaworld.chatter.command.MessageCommand
@@ -43,10 +44,11 @@ class Chatter : JavaPlugin() {
         server.onlinePlayers.forEach(preferences::load)
 
         val modules = ChatModules()
+        val audience = ChatAudience(preferences)
         val messenger = PrivateMessenger(server, { settings }, preferences, modules)
 
         server.pluginManager.registerEvents(preferences, this)
-        server.pluginManager.registerEvents(ChatListener({ settings }, preferences, modules), this)
+        server.pluginManager.registerEvents(ChatListener({ settings }, preferences, audience, modules), this)
         server.pluginManager.registerEvents(ServerMessageListener(server, preferences), this)
         server.pluginManager.registerEvents(ChatMenuListener(), this)
         server.pluginManager.registerEvents(messenger, this)
