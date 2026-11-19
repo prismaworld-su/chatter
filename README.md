@@ -130,7 +130,7 @@ Only `/chatter reload` can be run from the console; the other commands are for p
 
 ## Installation
 
-1. Make sure the server runs Paper 26.3 on Java 26.
+1. Make sure the server runs Paper 26.3 on Java 25.
 2. Put `chatter-<version>-all.jar` into the `plugins` folder. Optionally, install [PlaceholderAPI](https://modrinth.com/plugin/placeholderapi) and the expansions you need, for example `/papi ecloud download LuckPerms`.
 3. Start the server. Edit `plugins/chatter/config.yml` if needed and run `/chatter reload`.
 

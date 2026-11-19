@@ -26,11 +26,11 @@ jobs:
         uses: actions/checkout@v7
 
       # Версия должна совпадать с jvmToolchain в build.gradle.kts.
-      - name: Set up JDK 26
+      - name: Set up JDK 25
         uses: actions/setup-java@v6
         with:
           distribution: temurin
-          java-version: 26
+          java-version: 25
 
       # Кэширует зависимости Gradle и проверяет gradle-wrapper.jar по официальным контрольным суммам.
       - name: Set up Gradle
